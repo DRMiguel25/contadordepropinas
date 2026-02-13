@@ -136,6 +136,104 @@ El menú incluye una variedad de platillos:
 
 Todos los precios están en pesos mexicanos.
 
+## Arquitectura y Funcionamiento Técnico
+
+### Componentes
+
+La aplicación está dividida en componentes modulares, cada uno con una responsabilidad específica:
+
+- **Header.jsx**: Componente de presentación que muestra el título de la aplicación
+- **MenuItem.jsx**: Renderiza cada platillo del menú con su nombre y precio
+- **OrderCart.jsx**: Componente contenedor principal del carrito que orquesta los sub-componentes
+- **OrderItem.jsx**: Muestra cada item agregado al carrito con su cantidad y total
+- **TipSelector.jsx**: Radio buttons para seleccionar el porcentaje de propina
+- **OrderSummary.jsx**: Calcula y muestra subtotal, propina y total a pagar
+
+### Gestión de Estado con useReducer
+
+El estado de la aplicación se maneja con `useReducer` en lugar de múltiples `useState`. Esto permite:
+
+**Estado centralizado**:
+```javascript
+{
+  pedido: [],              // Array de items en el carrito
+  porcentajePropina: 10    // Porcentaje de propina seleccionado
+}
+```
+
+**Acciones disponibles**:
+- `AGREGAR_ITEM`: Agrega un item o incrementa su cantidad si ya existe
+- `ELIMINAR_ITEM`: Remueve un item del carrito
+- `CAMBIAR_PROPINA`: Actualiza el porcentaje de propina
+- `LIMPIAR_PEDIDO`: Resetea todo el estado a valores iniciales
+
+**Ventajas de useReducer**:
+- Lógica de actualización centralizada en una sola función
+- Transiciones de estado predecibles y fáciles de debuggear
+- Ideal para estado complejo con múltiples sub-valores relacionados
+- Facilita el testing de la lógica de negocio
+
+### Custom Hook: usePedido
+
+El hook `usePedido.js` encapsula toda la lógica del carrito:
+
+```javascript
+const { pedido, porcentajePropina, agregarItem, eliminarItem, cambiarPropina, limpiarPedido } = usePedido();
+```
+
+Este patrón permite:
+- Reutilizar la lógica en diferentes componentes si fuera necesario
+- Separar la lógica de negocio de la presentación
+- Mantener los componentes limpios y enfocados en la UI
+
+### Almacenamiento del Pedido
+
+El pedido se almacena **en memoria (state de React)** durante la sesión:
+
+- **No hay persistencia**: Al recargar la página, el carrito se vacía
+- **Estado en memoria**: Los datos viven solo mientras la aplicación está activa
+- **Ventajas**: Simplicidad, no requiere backend ni localStorage
+- **Comportamiento**: Similar a un carrito de compras temporal
+
+Cuando haces clic en "GUARDAR ORDEN", el pedido se limpia pero no se envía a ningún servidor. En una aplicación real, aquí se haría una petición HTTP para procesar el pedido.
+
+### Uso de Tailwind CSS
+
+Tailwind CSS se utiliza mediante clases de utilidad directamente en los componentes:
+
+**Configuración personalizada** (`tailwind.config.js`):
+```javascript
+colors: {
+  'primary': 'rgba(38, 204, 182, 1)',
+  'primary-hover': 'rgba(141, 243, 221, 1)',
+}
+```
+
+**Ventajas en este proyecto**:
+- Estilos inline sin archivos CSS separados
+- Diseño responsivo con clases como `lg:grid-cols-2`
+- Efectos hover con `hover:bg-primary-hover`
+- Consistencia visual con sistema de diseño predefinido
+- Desarrollo rápido sin escribir CSS personalizado
+
+### Flujo de Datos
+
+```
+Usuario hace clic en platillo
+    ↓
+MenuItem llama a agregarItem(platillo)
+    ↓
+usePedido ejecuta dispatch({ tipo: "AGREGAR_ITEM", datos: platillo })
+    ↓
+Reducer actualiza el estado (agrega item o incrementa cantidad)
+    ↓
+React re-renderiza componentes afectados
+    ↓
+OrderCart muestra el item actualizado
+    ↓
+OrderSummary recalcula totales automáticamente
+```
+
 ## Consideraciones de Desarrollo
 
 ### Gestión de Estado con useReducer
